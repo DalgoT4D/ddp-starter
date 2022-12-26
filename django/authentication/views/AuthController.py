@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from rest_framework.decorators import api_view
+import bcrypt
 
 # Cache
 from django.core.cache import cache
@@ -14,6 +15,9 @@ from ..validators import AuthRequest
 # Models
 from ..models import User
 
+# Exceptions
+from utils.CustomException import CustomException
+
 # Create your views here.
 @api_view(['POST'])
 def postSignup(request):
@@ -22,7 +26,13 @@ def postSignup(request):
         if validation.is_valid() is not True:
             return api_error('', validation.errors)
 
-        user = User(**validation.data, username=validation.data['email'])
+        user = User(
+            first_name=validation.data['first_name'],
+            last_name=validation.data['last_name'],
+            email=validation.data['email'],
+            password=bcrypt.hashpw(validation.data['password'].encode('utf-8'), bcrypt.gensalt()).decode(),
+            username=validation.data['email']
+        )
         user.save()
 
         token = generateAuthToken({
@@ -35,7 +45,7 @@ def postSignup(request):
 
         return api('Successfully signed up', { 'token': token, 'status': user.status }) 
     except Exception as e:
-        return api_error(str(e), {}, e.code if (type(e) is dict and 'code' in e.keys()) else 500)
+        return api_error(str(e), {}, e.code if isinstance(e, CustomException) else 500)
 
 
 @api_view(['POST'])
@@ -45,18 +55,32 @@ def postSignin(request):
         if validation.is_valid() is not True:
             return api_error('', validation.errors)
 
-        user = User.objects.get(email=validation.data['email'])
+        user = User.objects.filter(email=validation.data['email']).first()
 
-        token = cache.get(user.uuid)
+        if(user is None):
+            raise CustomException('User does not exist', 404)
 
-        return api('Signed in successfully', { token: token })
+        if(bcrypt.checkpw(validation.data['password'].encode('utf-8'), user.password.encode('utf-8')) is not True):
+            raise CustomException('Invalid credentials', 422)
+
+        token = generateAuthToken({
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            'uuid': str(user.uuid)
+        })
+
+        cache.set(user.uuid, token, None)
+
+        return api('Signed in successfully', { 'token': token })
     except Exception as e:
-        return api_error(str(e), {}, e.code if (type(e) is dict and 'code' in e.keys()) else 500)
+        return api_error(str(e), {}, e.code if isinstance(e, CustomException) else 500)
+    
 
 @api_view(['POST'])
 def postSignout(request):
     try:
+        cache.delete()
         return api('Signed out successfully', {})
     except Exception as e:
-        return api_error(str(e), {}, e.code if (type(e) is dict and 'code' in e.keys()) else 500)
+        return api_error(str(e), {}, e.code if isinstance(e, CustomException) else 500)
  
