@@ -12,5 +12,11 @@ def api_error(message, data={}, status_code=500):
     api_data = {}
     api_data['error'] = True
     api_data['message'] = message
-    api_data['body'] = data
+    result = []
+    for key, value in data.items():
+        d = {}
+        d['param'] = key
+        d['message'] = value[0]
+        result.append(d)
+    api_data['body'] = result
     return Response(api_data, status=status_code)
