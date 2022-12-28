@@ -58,7 +58,7 @@ def postSignin(request):
         user = User.objects.filter(email=validation.data['email']).first()
 
         if(user is None):
-            raise CustomException('User does not exist', 404)
+            raise CustomException('User does not exist', 401)
 
         if(bcrypt.checkpw(validation.data['password'].encode('utf-8'), user.password.encode('utf-8')) is not True):
             raise CustomException('Invalid credentials', 422)
