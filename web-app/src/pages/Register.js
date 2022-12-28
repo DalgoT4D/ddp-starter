@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import {
   Container,
@@ -14,10 +15,12 @@ import VisibilityOffOutlinedIcon from "@mui/icons-material/VisibilityOffOutlined
 import { LoadingButton } from "@mui/lab";
 import { useFormik } from "formik";
 import { RegisterValidationSchema } from "../utils/validations";
+import { ToastContext } from "../context/toastProvider";
 
 const Register = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [_, toastDispatch] = useContext(ToastContext);
 
   const formik = useFormik({
     initialValues: {
@@ -36,15 +39,36 @@ const Register = () => {
     setShowPassword(!showPassword);
   };
 
+  const navigate = useNavigate();
+
   const handleSubmit = async (values) => {
     setLoading(true);
     await axios
       .post(`${process.env.REACT_APP_API_URL}/auth/signup`, values)
       .then((res) => {
         setLoading(false);
-        console.log(res.data);
+        localStorage.setItem("token", res.data.body.token);
+        toastDispatch({
+          type: "new-toast",
+          value: {
+            open: true,
+            message: res.data.message,
+            seconds: 4,
+          },
+        });
+        navigate("/dashboard");
       })
-      .catch((err) => console.log(err));
+      .catch((err) => {
+        setLoading(false);
+        toastDispatch({
+          type: "new-toast",
+          value: {
+            open: true,
+            message: err.data.message,
+            seconds: 4,
+          },
+        });
+      });
   };
 
   return (
