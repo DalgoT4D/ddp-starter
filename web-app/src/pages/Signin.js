@@ -16,6 +16,7 @@ import { LoadingButton } from "@mui/lab";
 import { useFormik } from "formik";
 import { SigninValidationSchema } from "../utils/validations";
 import { ToastContext } from "../context/toastProvider";
+import { errorToast, successToast } from "../utils/toastHelper";
 
 const Signin = () => {
   const [loading, setLoading] = useState(false);
@@ -27,29 +28,18 @@ const Signin = () => {
     await axios
       .post(`${process.env.REACT_APP_API_URL}/auth/signin`, values)
       .then((res) => {
-        console.log("here");
         setLoading(false);
         localStorage.setItem("token", res.data.body.token);
-        toastDispatch({
-          type: "new-toast",
-          value: {
-            open: true,
-            message: res.data.message,
-            seconds: 4,
-          },
-        });
+        successToast(toastDispatch, res.data.message);
         navigate("/dashboard");
       })
       .catch((err) => {
         setLoading(false);
-        toastDispatch({
-          type: "new-toast",
-          value: {
-            open: true,
-            message: err.response.data.message,
-            seconds: 4,
-          },
-        });
+        errorToast(
+          toastDispatch,
+          err.response.data.message,
+          err.response.data.body
+        );
       });
   };
 
@@ -71,7 +61,6 @@ const Signin = () => {
   const navigate = useNavigate();
   return (
     <Container>
-      {" "}
       <form onSubmit={formik.handleSubmit}>
         <Box
           sx={{

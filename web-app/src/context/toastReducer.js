@@ -15,6 +15,7 @@ export const reducer = (state, action) => {
         message: action.value.message,
         seconds: action.value.seconds,
         messages: action.value.messages,
+        severity: action.value.severity,
       };
   }
 };

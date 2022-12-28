@@ -1,7 +1,14 @@
 import React from "react";
-import { Box, Snackbar } from "@mui/material";
+import { Box, Snackbar, Alert, Typography } from "@mui/material";
 
-const ToastMessage = ({ open, seconds, message, messages, handleClose }) => {
+const ToastMessage = ({
+  open,
+  seconds,
+  message,
+  messages,
+  handleClose,
+  severity,
+}) => {
   const handleCloseButton = () => {
     handleClose();
   };
@@ -14,7 +21,19 @@ const ToastMessage = ({ open, seconds, message, messages, handleClose }) => {
         message={message}
         anchorOrigin={{ vertical: "top", horizontal: "right" }}
         onClose={handleCloseButton}
-      />
+      >
+        {message.length <= 0 ? (
+          <Alert onClose={handleCloseButton} severity={severity}>
+            {messages.map((message, idx) => (
+              <Typography key={idx}>{message.message}</Typography>
+            ))}
+          </Alert>
+        ) : (
+          <Alert onClose={handleCloseButton} severity={severity}>
+            {message}
+          </Alert>
+        )}
+      </Snackbar>
     </Box>
   );
 };

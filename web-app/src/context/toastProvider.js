@@ -14,6 +14,7 @@ export const ToastProvider = ({ children, initialState, reducer }) => {
         seconds={toastState.seconds}
         message={toastState.message}
         messages={toastState.messages}
+        severity={toastState.severity}
         handleClose={() => toastDispatch({ type: "close", value: "" })}
       />
     </ToastContext.Provider>
