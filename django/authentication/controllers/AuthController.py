@@ -13,7 +13,7 @@ from utils.helpers.AuthTokenHelper import *
 from ..validators import AuthRequest
 
 # Models
-from ..models import User
+from ..models.UserModel import User
 
 # Exceptions
 from utils.exceptions.CustomException import CustomException
@@ -29,6 +29,13 @@ def postSignup(request):
         if validation.is_valid() is not True:
             return api_error('', validation.errors)
 
+        # Check if user exists
+        user = User.objects.filter(email=validation.data['email']).first()
+
+        if(user):
+            raise CustomException('User with the email already exists. Please enter different email', 422)
+
+        # If not create a new one
         user = User(
             first_name=validation.data['first_name'],
             last_name=validation.data['last_name'],
@@ -38,6 +45,7 @@ def postSignup(request):
         )
         user.save()
 
+        # Set token in redis cache
         token = generateAuthToken({
             'first_name': user.first_name,
             'last_name': user.last_name,
@@ -58,14 +66,17 @@ def postSignin(request):
         if validation.is_valid() is not True:
             return api_error('', validation.errors)
 
+        # Check if user exists
         user = User.objects.filter(email=validation.data['email']).first()
 
         if(user is None):
             raise CustomException('User does not exist', 401)
 
+        # Verify creds if user exists
         if(bcrypt.checkpw(validation.data['password'].encode('utf-8'), user.password.encode('utf-8')) is not True):
             raise CustomException('Invalid credentials', 422)
 
+        # Set token in redis cache
         token = generateAuthToken({
             'first_name': user.first_name,
             'last_name': user.last_name,
