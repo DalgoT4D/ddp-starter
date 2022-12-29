@@ -16,3 +16,18 @@ class postAirbyteConnection(serializers.Serializer):
             'blank': 'Please enter your connector credentials',
         }
     )
+
+class putAirbyteConnection(serializers.Serializer):
+    connector = serializers.CharField(
+        required=False,
+        allow_blank=False,
+        error_messages={
+            'blank': 'Please enter the source connector'
+        }
+    )
+    creds = serializers.JSONField(
+        required=False,
+        error_messages={
+            'blank': 'Please enter your connector credentials',
+        }
+    )

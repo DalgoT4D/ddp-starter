@@ -1,5 +1,6 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+import uuid
 
 # Helpers
 from utils.helpers.helpers import *
@@ -47,7 +48,7 @@ def getAirbyteConnections(request):
         if isinstance(user, Response):
             return user
 
-        connections = Airbyte.objects.filter(user_id=user.id).values('connector', 'creds', 'uuid', 'status')
+        connections = Airbyte.objects.filter(user_id=user.id).values('connector', 'creds', 'uuid', 'status', 'created_at')
 
         return api('Airbyte connections fetched succesfully', connections)
     except Exception as e:
@@ -61,7 +62,17 @@ def getAirbyteConnection(request, connection_uuid):
         if isinstance(user, Response):
             return user
 
-        return api('Airbyte connection fetched succesfully', {})
+        try:
+            uuid.UUID(connection_uuid)
+        except Exception as e:
+            raise CustomException('Invalid request', 422)
+
+        connection = Airbyte.objects.filter(user_id=user.id, uuid=connection_uuid).values('connector', 'creds', 'uuid', 'status', 'created_at').first()
+
+        if(connection is None):
+            raise CustomException('Connection does not exist', 401)
+
+        return api('Airbyte connection fetched succesfully', connection)
     except Exception as e:
         return api_error(str(e), {}, e.code if isinstance(e, CustomException) else 500)
 
@@ -73,7 +84,25 @@ def putAirbyteConnection(request, connection_uuid):
         if isinstance(user, Response):
             return user
 
-        return api('Airbyte connection updated succesfully', {})
+        validation = AirbyteRequest.putAirbyteConnection(data=request.data)
+        if validation.is_valid() is not True:
+            return api_error('', validation.errors)
+
+        try:
+            uuid.UUID(connection_uuid)
+        except Exception as e:
+            raise CustomException('Invalid request', 422)
+
+        connection = Airbyte.objects.filter(user_id=user.id, uuid=connection_uuid).first()
+
+        if(connection is None):
+            raise CustomException('Connection does not exist', 401)
+            
+        connection.connector = validation.data['connector'] if('connector' in validation.data.keys()) else connection.connector
+        connection.creds = validation.data['creds'] if('creds' in validation.data.keys()) else connection.creds
+        connection.save()
+
+        return api('Airbyte connection updated succesfully', {'connector': connection.connector, 'creds': connection.creds, 'status': connection.status, 'uuid': connection.uuid})
     except Exception as e:
         return api_error(str(e), {}, e.code if isinstance(e, CustomException) else 500)
 
@@ -85,6 +114,18 @@ def deleteAirbyteConnection(request, connection_uuid):
 
         if isinstance(user, Response):
             return user
+
+        try:
+            uuid.UUID(connection_uuid)
+        except Exception as e:
+            raise CustomException('Invalid request', 422)
+
+        connection = Airbyte.objects.filter(user_id=user.id, uuid=connection_uuid).first()
+
+        if(connection is None):
+            raise CustomException('Connection does not exist', 401)
+
+        connection.delete()
 
         return api('Airbyte connection deleted succesfully', {})
     except Exception as e:
