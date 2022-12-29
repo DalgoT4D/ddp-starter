@@ -5,7 +5,8 @@ import Home from "./pages/Home";
 import Signin from "./pages/Signin";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
-import ToastMessage from "./common/ToastMessage";
+import Airbyte from "./pages/Airbyte";
+import Dbt from "./pages/Dbt";
 
 function App() {
   return (
@@ -16,6 +17,8 @@ function App() {
           <Route path="/signin" element={<Signin />} />
           <Route path="/signup" element={<Register />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/airbyte" element={<Airbyte />} />
+          <Route path="/dbt" element={<Dbt />} />
         </Routes>
       </Router>
     </>

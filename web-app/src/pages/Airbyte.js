@@ -1,10 +1,10 @@
-import React, { Component, useEffect, useState } from "react";
+import { Box } from "@mui/material";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
-import { Container, Box } from "@mui/material";
 import Menu from "../common/Menu";
+import axios from "axios";
 
-const Dashboard = () => {
+const Airbyte = () => {
   const [showComponent, setShowComponent] = useState(false);
   const navigate = useNavigate();
   useEffect(() => {
@@ -27,11 +27,11 @@ const Dashboard = () => {
   return (
     showComponent && (
       <Box>
-        <Menu navItem="dashboard" />
-        dashboard
+        <Menu navItem="airbyte" />
+        airbyte
       </Box>
     )
   );
 };
 
-export default Dashboard;
+export default Airbyte;
