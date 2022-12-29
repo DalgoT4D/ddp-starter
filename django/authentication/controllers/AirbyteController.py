@@ -47,7 +47,9 @@ def getAirbyteConnections(request):
         if isinstance(user, Response):
             return user
 
-        return api('Airbyte connections fetched succesfully', {})
+        connections = Airbyte.objects.filter(user_id=user.id).values('connector', 'creds', 'uuid', 'status')
+
+        return api('Airbyte connections fetched succesfully', connections)
     except Exception as e:
         return api_error(str(e), {}, e.code if isinstance(e, CustomException) else 500)
 
