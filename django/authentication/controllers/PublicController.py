@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from rest_framework.decorators import api_view
-from utils.helpers import *
+from utils.helpers.helpers import *
 
 # Create your views here.
 @api_view(['GET'])

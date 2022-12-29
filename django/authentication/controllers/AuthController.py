@@ -6,8 +6,8 @@ import bcrypt
 from django.core.cache import cache
 
 # Helpers
-from utils.helpers import *
-from utils.AuthTokenHelper import *
+from utils.helpers.helpers import *
+from utils.helpers.AuthTokenHelper import *
 
 # Validators
 from ..validators import AuthRequest
@@ -16,7 +16,10 @@ from ..validators import AuthRequest
 from ..models import User
 
 # Exceptions
-from utils.CustomException import CustomException
+from utils.exceptions.CustomException import CustomException
+
+# Middlewares
+from utils.middlewares.AuthenticateMiddleware import authenticate
 
 # Create your views here.
 @api_view(['POST'])
@@ -79,7 +82,13 @@ def postSignin(request):
 @api_view(['POST'])
 def postSignout(request):
     try:
-        cache.delete()
+        user = authenticate(request)
+
+        if isinstance(user, Response):
+            return user
+
+        cache.delete(user.uuid)
+
         return api('Signed out successfully', {})
     except Exception as e:
         return api_error(str(e), {}, e.code if isinstance(e, CustomException) else 500)
