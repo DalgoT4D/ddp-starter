@@ -10,6 +10,12 @@ from utils.exceptions.CustomException import CustomException
 # Middlewares
 from utils.middlewares.AuthenticateMiddleware import authenticate
 
+# Validations
+from ..validators import AirbyteRequest
+
+# Models
+from ..models.AirbyteModel import Airbyte
+
 @api_view(['POST'])
 def postAirbyteConnection(request):
     try:
@@ -17,6 +23,17 @@ def postAirbyteConnection(request):
 
         if isinstance(user, Response):
             return user
+
+        validation = AirbyteRequest.postAirbyteConnection(data=request.data)
+        if validation.is_valid() is not True:
+            return api_error('', validation.errors)
+
+        airbyte = Airbyte(
+            user_id=user,
+            connector=validation.data['connector'],
+            creds=validation.data['creds'],
+        )
+        airbyte.save()
 
         return api('Airbyte connection details saved successfully', {})
     except Exception as e:

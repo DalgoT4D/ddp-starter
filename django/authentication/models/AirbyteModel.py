@@ -1,6 +1,6 @@
 import uuid
 from django.db import models
-from UserModel import User
+from .UserModel import User
 
 # Create your models here.
 class Airbyte(models.Model):
