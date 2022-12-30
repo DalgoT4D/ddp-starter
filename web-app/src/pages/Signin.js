@@ -17,7 +17,6 @@ const Signin = () => {
     await axios
       .post(`${process.env.REACT_APP_API_URL}/auth/signin`, values)
       .then((res) => {
-        console.log(res.data.body.token);
         setLoading(false);
         localStorage.setItem("token", res.data.body.token);
         successToast(toastDispatch, res.data.message);

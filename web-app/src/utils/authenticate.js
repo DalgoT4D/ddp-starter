@@ -11,7 +11,6 @@ const withAuth = (Component) => {
       })
         .then((res) => {
           isAuth = true;
-          console.log(isAuth);
           return <Component show={true} />;
         })
         .catch((err) => {
