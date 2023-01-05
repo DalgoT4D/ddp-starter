@@ -7,6 +7,8 @@ import {
   TextField,
   InputAdornment,
   IconButton,
+  Button,
+  Link,
 } from "@mui/material";
 import { useFormik } from "formik";
 import { SigninValidationSchema } from "../../utils/validations";
@@ -121,6 +123,17 @@ const SigninForm = ({
             >
               Sign in
             </LoadingButton>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "center",
+                marginTop: "1rem",
+              }}
+            >
+              <Link sx={{ ":hover": { cursor: "pointer" } }} href="/signup">
+                Register
+              </Link>
+            </Box>
           </Card>
         </Box>
       </form>
