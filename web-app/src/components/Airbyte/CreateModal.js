@@ -24,6 +24,7 @@ const CreateModal = ({ open, setOpen, refresh, setRefresh }) => {
 
   const handleModalClose = () => {
     formik.resetForm();
+    setCreds([{ key: "", value: "" }]);
     setOpen(false);
   };
 
@@ -140,7 +141,9 @@ const CreateModal = ({ open, setOpen, refresh, setRefresh }) => {
                 <InputLabel sx={{ marginBottom: "5px" }}>
                   Credentials
                 </InputLabel>
-                <Box>
+                <Box
+                  sx={{ display: "flex", flexDirection: "column", gap: "1rem" }}
+                >
                   {creds.map((cred, idx) => (
                     <Box sx={{ display: "flex", gap: "2rem" }} key={idx}>
                       <TextField
@@ -197,7 +200,7 @@ const CreateModal = ({ open, setOpen, refresh, setRefresh }) => {
                 loading={false}
                 type="submit"
               >
-                Create
+                Add Connection
               </LoadingButton>
             </Card>
           </Box>

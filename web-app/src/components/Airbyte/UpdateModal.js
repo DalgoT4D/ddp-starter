@@ -165,7 +165,9 @@ const UpdateModal = ({ open, setOpen, refresh, setRefresh, uuid }) => {
                 <InputLabel sx={{ marginBottom: "5px" }}>
                   Credentials
                 </InputLabel>
-                <Box>
+                <Box
+                  sx={{ display: "flex", flexDirection: "column", gap: "1rem" }}
+                >
                   {creds.map((cred, idx) => (
                     <Box sx={{ display: "flex", gap: "2rem" }} key={idx}>
                       <TextField
@@ -222,7 +224,7 @@ const UpdateModal = ({ open, setOpen, refresh, setRefresh, uuid }) => {
                 loading={false}
                 type="submit"
               >
-                Create
+                Update connection
               </LoadingButton>
             </Card>
           </Box>

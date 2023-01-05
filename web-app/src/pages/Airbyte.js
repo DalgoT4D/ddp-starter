@@ -78,7 +78,13 @@ const Airbyte = () => {
     showComponent && (
       <Box>
         <Menu navItem="airbyte" />
-        <Box sx={{ display: "flex", justifyContent: "center", width: "100%" }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            width: "100%",
+          }}
+        >
           <DataTable
             rows={rows}
             headings={headings}
@@ -86,7 +92,12 @@ const Airbyte = () => {
             onUpdateConnection={handleUpdateButtonClick}
           />
           <Button
-            sx={{ minHeight: 0, minWidth: 0 }}
+            sx={{
+              minHeight: 0,
+              minWidth: 0,
+              alignSelf: "flex-start",
+              marginTop: "2rem",
+            }}
             onClick={handleCreateButtonClick}
           >
             <Add />
