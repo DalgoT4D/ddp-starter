@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useContext, useEffect, useState } from "react";
+import axios from "axios";
 import {
   Container,
   Box,
@@ -7,12 +8,17 @@ import {
   TextField,
   InputAdornment,
   IconButton,
+  Select,
+  MenuItem,
+  Checkbox,
 } from "@mui/material";
 import { useFormik } from "formik";
 import { RegisterValidationSchema } from "../../utils/validations";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import VisibilityOffOutlinedIcon from "@mui/icons-material/VisibilityOffOutlined";
 import { LoadingButton } from "@mui/lab";
+import { ToastContext } from "../../context/toastProvider";
+import { errorToast, successToast } from "../../utils/toastHelper";
 
 const SignupForm = ({
   onFormSubmit,
@@ -20,15 +26,26 @@ const SignupForm = ({
   showPassword,
   setShowPassword,
 }) => {
+  const [orgs, setOrgs] = useState([]);
+  const [isExistingOrg, setIsExistingOrg] = useState(false);
+  const [_, toastDispatch] = useContext(ToastContext);
+
   const formik = useFormik({
     initialValues: {
       first_name: "",
       last_name: "",
       email: "",
       password: "",
+      organisation_id: "",
+      organisation_name: "",
     },
     validationSchema: RegisterValidationSchema,
     onSubmit: (values) => {
+      if (isExistingOrg) {
+        delete values["organisation_name"];
+      } else {
+        delete values["organisation_id"];
+      }
       onFormSubmit(values);
     },
   });
@@ -36,6 +53,25 @@ const SignupForm = ({
   const handleClickShowPassword = () => {
     setShowPassword(!showPassword);
   };
+
+  useEffect(() => {
+    (async () => {
+      axios({
+        method: "get",
+        url: `${process.env.REACT_APP_API_URL}/api/public/organisations`,
+      })
+        .then((res) => {
+          setOrgs(res.data.body);
+        })
+        .catch((err) => {
+          errorToast(
+            toastDispatch,
+            err.response.data.message,
+            err.response.data.body
+          );
+        });
+    })();
+  }, []);
 
   return (
     <Container>
@@ -137,6 +173,57 @@ const SignupForm = ({
                   ),
                 }}
               />
+            </Box>
+            <Box sx={{ marginBottom: "16px", display: "flex" }}>
+              <Box sx={{ width: "100%" }}>
+                <InputLabel sx={{ marginBottom: "5px" }}>
+                  Existing organisation ?
+                </InputLabel>
+                <Checkbox
+                  checked={isExistingOrg}
+                  onClick={() => setIsExistingOrg(!isExistingOrg)}
+                />
+              </Box>
+              {isExistingOrg ? (
+                <Box sx={{ width: "100%" }}>
+                  <InputLabel sx={{ marginBottom: "5px" }}>
+                    Select organisation
+                  </InputLabel>
+                  <Select
+                    id="organisation_id"
+                    name="organisation_id"
+                    sx={{ width: "100%" }}
+                    value={formik.values.organisation_id}
+                    onChange={formik.handleChange}
+                  >
+                    {orgs.map((org, idx) => (
+                      <MenuItem value={org.id}>{org.name}</MenuItem>
+                    ))}
+                  </Select>
+                </Box>
+              ) : (
+                <Box sx={{ width: "100%" }}>
+                  <InputLabel sx={{ marginBottom: "5px" }}>
+                    Add New Organisation
+                  </InputLabel>
+                  <TextField
+                    fullWidth
+                    id="organisation_name"
+                    name="organisation_name"
+                    placeholder="Please enter organisation name"
+                    onChange={formik.handleChange}
+                    value={formik.values.organisation_name}
+                    error={
+                      formik.touched.organisation_name &&
+                      Boolean(formik.errors.organisation_name)
+                    }
+                    helperText={
+                      formik.touched.organisation_name &&
+                      formik.errors.organisation_name
+                    }
+                  />
+                </Box>
+              )}
             </Box>
             <LoadingButton
               sx={{

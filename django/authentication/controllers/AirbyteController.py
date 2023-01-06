@@ -15,7 +15,7 @@ from utils.middlewares.AuthenticateMiddleware import authenticate
 from ..validators import AirbyteRequest
 
 # Models
-from ..models.AirbyteModel import Airbyte
+from ..models.Airbyte import Airbyte
 
 @api_view(['POST'])
 def postAirbyteConnection(request):
@@ -30,7 +30,8 @@ def postAirbyteConnection(request):
             return api_error('', validation.errors)
 
         airbyte = Airbyte(
-            user_id=user,
+            user_id=user.id,
+            organisation_id=user.organisation_id,
             connector=validation.data['connector'],
             creds=validation.data['creds'],
         )
@@ -48,7 +49,7 @@ def getAirbyteConnections(request):
         if isinstance(user, Response):
             return user
 
-        connections = Airbyte.objects.filter(user_id=user.id).values('connector', 'creds', 'uuid', 'status', 'created_at')
+        connections = Airbyte.objects.filter(organisation_id=user.organisation_id).order_by('-created_at').values('connector', 'creds', 'uuid', 'status', 'created_at')
 
         return api('Airbyte connections fetched succesfully', connections)
     except Exception as e:
@@ -67,7 +68,7 @@ def getAirbyteConnection(request, connection_uuid):
         except Exception as e:
             raise CustomException('Invalid request', 422)
 
-        connection = Airbyte.objects.filter(user_id=user.id, uuid=connection_uuid).values('connector', 'creds', 'uuid', 'status', 'created_at').first()
+        connection = Airbyte.objects.filter(organisation_id=user.organisation_id, uuid=connection_uuid).values('connector', 'creds', 'uuid', 'status', 'created_at').first()
 
         if(connection is None):
             raise CustomException('Connection does not exist', 401)
@@ -93,7 +94,7 @@ def putAirbyteConnection(request, connection_uuid):
         except Exception as e:
             raise CustomException('Invalid request', 422)
 
-        connection = Airbyte.objects.filter(user_id=user.id, uuid=connection_uuid).first()
+        connection = Airbyte.objects.filter(organisation_id=user.organisation_id, uuid=connection_uuid).first()
 
         if(connection is None):
             raise CustomException('Connection does not exist', 401)

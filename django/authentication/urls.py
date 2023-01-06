@@ -17,4 +17,6 @@ urlpatterns = [
     path('api/airbyte/<str:connection_uuid>', AirbyteController.getAirbyteConnection),
     path('api/airbyte/<str:connection_uuid>/update', AirbyteController.putAirbyteConnection),
     path('api/airbyte/<str:connection_uuid>/delete', AirbyteController.deleteAirbyteConnection),
+
+    path('api/public/organisations', PublicController.getOrganisations)
 ]

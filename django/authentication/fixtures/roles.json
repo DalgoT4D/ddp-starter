@@ -1,0 +1,22 @@
+[
+  {
+    "model": "authentication.models.Role",
+    "pk": 1,
+    "fields": {
+      "slug": "John",
+      "name": "Snow",
+      "created_at": "2022-01-01",
+      "updated_at": "2022-01-01"
+    }
+  },
+  {
+    "model": "authentication.models.Role",
+    "pk": 2,
+    "fields": {
+      "slug": "Paul",
+      "name": "McCartney",
+      "created_at": "2022-01-01",
+      "updated_at": "2022-01-01"
+    }
+  }
+]

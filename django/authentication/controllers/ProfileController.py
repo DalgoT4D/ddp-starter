@@ -12,7 +12,7 @@ from utils.helpers.helpers import *
 from utils.exceptions.CustomException import CustomException
 
 # Models
-from ..models.UserModel import User
+from ..models.User import User
 
 # Middlewares
 from utils.middlewares.AuthenticateMiddleware import authenticate

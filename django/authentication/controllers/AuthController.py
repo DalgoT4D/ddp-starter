@@ -13,7 +13,8 @@ from utils.helpers.AuthTokenHelper import *
 from ..validators import AuthRequest
 
 # Models
-from ..models.UserModel import User
+from ..models.User import User
+from ..models.Organisation import Organisation
 
 # Exceptions
 from utils.exceptions.CustomException import CustomException
@@ -35,13 +36,26 @@ def postSignup(request):
         if(user):
             raise CustomException('User with the email already exists. Please enter different email', 422)
 
-        # If not create a new one
+        organisation = None
+
+        # Check if user selected existing organisation or is trying to create a new one
+        if validation.data.get('organisation_id'):
+            organisation = Organisation.objects.filter(id=validation.data.get('organisation_id')).first()
+
+        if(organisation is None):
+            organisation = Organisation(
+                name=validation.data.get('organisation_name')
+            )
+            organisation.save()
+
+        # Create a new user
         user = User(
             first_name=validation.data['first_name'],
             last_name=validation.data['last_name'],
             email=validation.data['email'],
             password=bcrypt.hashpw(validation.data['password'].encode('utf-8'), bcrypt.gensalt()).decode(),
-            username=validation.data['email']
+            username=validation.data['email'],
+            organisation_id=organisation.id
         )
         user.save()
 

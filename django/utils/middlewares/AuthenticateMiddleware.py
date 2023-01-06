@@ -11,7 +11,7 @@ from utils.helpers.helpers import *
 from ..exceptions.CustomException import CustomException
 
 # Models
-from authentication.models.UserModel import User
+from authentication.models.User import User
 
 def authenticate(request):
     try:

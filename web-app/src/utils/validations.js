@@ -13,6 +13,13 @@ export const RegisterValidationSchema = Yup.object({
   password: Yup.string()
     .min(6, "Password must be atleast 6 characters")
     .required("Please enter the password"),
+  organisation_id: Yup.number()
+    .integer()
+    .min(1, "Invalid organisation selected"),
+  organisation_name: Yup.string().max(
+    255,
+    "Organisation name must be 255 characters or less"
+  ),
 });
 
 export const SigninValidationSchema = Yup.object({

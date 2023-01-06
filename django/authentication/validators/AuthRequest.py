@@ -35,6 +35,26 @@ class postSignup(serializers.Serializer):
             'min_length': 'Please make sure the password is atleast 6 characters'
         }
     )
+    organisation_id = serializers.IntegerField(
+        required=False,
+        error_messages={
+            'required': 'Please select the organisation',
+        }
+    )
+    organisation_name = serializers.CharField(
+        required=False,
+        allow_blank=False,
+        error_messages={
+            'required': 'Please enter the organisation name',
+            'blank': 'Please enter the organisation name',
+        }
+    )
+
+    def validate(self, data):
+        if 'organisation_id' not in data.keys() and 'organisation_name' not in data.keys():
+            raise serializers.ValidationError({'organisation_name': 'Please enter the organisation details'})
+
+        return data
 
 class postSignin(serializers.Serializer):
     email = serializers.CharField(
