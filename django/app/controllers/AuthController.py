@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from rest_framework.decorators import api_view
+from rest_framework.response import Response
 import bcrypt
 
 # Cache
@@ -22,6 +23,9 @@ from utils.exceptions.CustomException import CustomException
 # Middlewares
 from utils.middlewares.AuthenticateMiddleware import authenticate
 
+# Airbyte api service
+from services.airbyte.WorkspaceService import *
+
 # Create your views here.
 @api_view(['POST'])
 def postSignup(request):
@@ -42,9 +46,15 @@ def postSignup(request):
         if validation.data.get('organisation_id'):
             organisation = Organisation.objects.filter(id=validation.data.get('organisation_id')).first()
 
+        # Create new organisation if it doesn't exist and the workspace
         if(organisation is None):
+            # Setup a workspace
+            res = createWorkspace(validation.data.get('organisation_name'))
+
+            # Create organisation and map to workspace
             organisation = Organisation(
-                name=validation.data.get('organisation_name')
+                name=validation.data.get('organisation_name'),
+                airbyte_workspace_id=res['workspaceId']
             )
             organisation.save()
 

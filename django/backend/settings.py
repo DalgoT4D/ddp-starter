@@ -39,7 +39,7 @@ INSTALLED_APPS = [
     # 'django.contrib.messages',
     # 'django.contrib.staticfiles',
     'rest_framework',
-    'authentication',
+    'app',
     'django_extensions',
     'corsheaders',
     'django_seed'

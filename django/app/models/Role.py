@@ -10,4 +10,4 @@ class Role(models.Model):
 
     class Meta:
         db_table = 'roles'
-        app_label = 'authentication'
+        app_label = 'app'

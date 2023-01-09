@@ -18,4 +18,4 @@ class Airbyte(models.Model):
 
     class Meta:
         db_table = 'airbyte'
-        app_label = 'authentication'
+        app_label = 'app'

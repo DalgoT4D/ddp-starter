@@ -14,4 +14,4 @@ class Organisation(models.Model):
 
     class Meta:
         db_table = 'organisations'
-        app_label = 'authentication'
+        app_label = 'app'
