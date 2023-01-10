@@ -6,8 +6,10 @@ import {
   InputLabel,
   Card,
   Button,
+  Select,
+  MenuItem,
 } from "@mui/material";
-import React, { useContext, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { LoadingButton } from "@mui/lab";
 import { useFormik } from "formik";
 import { Close, Add, Delete } from "@mui/icons-material";
@@ -15,23 +17,25 @@ import { ToastContext } from "../../context/toastProvider";
 import axios from "axios";
 import { errorToast, successToast } from "../../utils/toastHelper";
 import { useNavigate } from "react-router-dom";
+import AirbyteCredsInput from "./AirbyteCredsInput";
 
 const CreateModal = ({ open, setOpen, refresh, setRefresh }) => {
   const [_, toastDispatch] = useContext(ToastContext);
 
-  const [creds, setCreds] = useState([{ key: "", value: "" }]);
+  const [sourceDefs, setSourceDefs] = useState([]);
+  const [sourceDefSpecs, setSourceDefSpecs] = useState([]);
   const navigate = useNavigate();
 
   const handleModalClose = () => {
     formik.resetForm();
-    setCreds([{ key: "", value: "" }]);
     setOpen(false);
   };
 
   const formik = useFormik({
     initialValues: {
       connector: "",
-      creds: "",
+      source_definition_id: "",
+      creds: {},
     },
     // validationSchema: SigninValidationSchema,
     onSubmit: (values) => {
@@ -39,31 +43,7 @@ const CreateModal = ({ open, setOpen, refresh, setRefresh }) => {
     },
   });
 
-  const onCredsChange = (event) => {
-    let id = event.target.id;
-    let type = event.target.name;
-    let temp = creds.slice();
-
-    temp[id] = {
-      key: type === "key" ? event.target.value : creds[id].key,
-      value: type === "value" ? event.target.value : creds[id].value,
-    };
-    setCreds(temp);
-  };
-
-  const addCredFields = (e) => {
-    setCreds([...creds, { key: "", value: "" }]);
-  };
-
-  const deleteCredFields = (idx) => {
-    setCreds(creds.filter((val, i) => i !== idx));
-  };
-
   const onFormSubmit = (values) => {
-    let credentials = {};
-    creds.map((obj, idx) => {
-      credentials[obj.key] = obj.value;
-    });
     (async () => {
       axios({
         method: "post",
@@ -71,7 +51,8 @@ const CreateModal = ({ open, setOpen, refresh, setRefresh }) => {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         data: {
           connector: values.connector,
-          creds: credentials,
+          source_definition_id: values.source_definition_id,
+          creds: values.creds,
         },
       })
         .then((res) => {
@@ -86,9 +67,61 @@ const CreateModal = ({ open, setOpen, refresh, setRefresh }) => {
     })();
   };
 
+  useEffect(() => {
+    // Fetch all source available from airbyte
+    if (open) {
+      (async () => {
+        axios({
+          method: "get",
+          url: `${process.env.REACT_APP_API_URL}/api/airbyte/source_definitions`,
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        })
+          .then((res) => {
+            setSourceDefs(res.data.body);
+          })
+          .catch((err) => {
+            errorToast(toastDispatch, err.data.message, err.data.body);
+          });
+      })();
+    }
+  }, [open]);
+
+  useEffect(() => {
+    // Fetch source definition specs
+    if (formik.values.source_definition_id) {
+      (async () => {
+        axios({
+          method: "get",
+          url: `${process.env.REACT_APP_API_URL}/api/airbyte/source_definitions/${formik.values.source_definition_id}/specs`,
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        })
+          .then((res) => {
+            // Prepare the creds
+            let temp = {};
+            for (const property of res.data.body) {
+              switch (property.type) {
+                case "string":
+                  temp[`${property.field}`] = "";
+                  break;
+                case "array":
+                  temp[`${property.field}`] = [];
+                  break;
+              }
+            }
+            formik.setFieldValue("creds", temp);
+            // Set the source def specs
+            setSourceDefSpecs(res.data.body);
+          })
+          .catch((err) => {
+            errorToast(toastDispatch, err.data.message, err.data.body);
+          });
+      })();
+    }
+  }, [formik.values.source_definition_id]);
+
   return (
     <>
-      <Modal open={open}>
+      <Modal open={open} sx={{ overflow: "scroll" }}>
         <form onSubmit={formik.handleSubmit}>
           <Box
             sx={{
@@ -137,51 +170,37 @@ const CreateModal = ({ open, setOpen, refresh, setRefresh }) => {
                   }
                 />
               </Box>
-              <Box sx={{ marginBottom: "16px" }}>
+              <Box marginBottom={{ marginBottom: "16px" }}>
                 <InputLabel sx={{ marginBottom: "5px" }}>
-                  Credentials
+                  Source type
                 </InputLabel>
-                <Box
-                  sx={{ display: "flex", flexDirection: "column", gap: "1rem" }}
+                <Select
+                  id="source_definition_id"
+                  name="source_definition_id"
+                  sx={{ width: "100%" }}
+                  value={formik.values.source_definition_id}
+                  onChange={formik.handleChange}
                 >
-                  {creds.map((cred, idx) => (
-                    <Box sx={{ display: "flex", gap: "2rem" }} key={idx}>
-                      <TextField
-                        id={idx}
-                        name="key"
-                        placeholder="Please enter the key"
-                        onChange={onCredsChange}
-                        value={cred.key}
-                      />
-                      <TextField
-                        id={idx}
-                        name="value"
-                        placeholder="Please enter the value"
-                        onChange={onCredsChange}
-                        value={cred.value}
-                      />
-                      {idx === creds.length - 1 ? (
-                        <Button
-                          sx={{
-                            color: "black",
-                          }}
-                          onClick={addCredFields}
-                        >
-                          <Add />
-                        </Button>
-                      ) : (
-                        <Button
-                          id={idx}
-                          sx={{
-                            color: "black",
-                          }}
-                          onClick={() => deleteCredFields(idx)}
-                        >
-                          <Delete />
-                        </Button>
-                      )}
-                    </Box>
+                  {sourceDefs.map((sourceDef, idx) => (
+                    <MenuItem key={idx} value={sourceDef.sourceDefinitionId}>
+                      {sourceDef.name}
+                    </MenuItem>
                   ))}
+                </Select>
+              </Box>
+              <Box sx={{ marginBottom: "16px" }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "1rem",
+                  }}
+                >
+                  <AirbyteCredsInput
+                    specs={sourceDefSpecs}
+                    setSpecs={setSourceDefSpecs}
+                    formik={formik}
+                  />
                 </Box>
               </Box>
               <LoadingButton
