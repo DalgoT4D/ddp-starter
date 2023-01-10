@@ -4,12 +4,13 @@ from .User import User
 from .Organisation import Organisation
 
 # Create your models here.
-class Airbyte(models.Model):
+class AirbyteConnector(models.Model):
     uuid = models.UUIDField(default=uuid.uuid4)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     organisation = models.ForeignKey(Organisation, on_delete=models.CASCADE)
-    connector = models.CharField(max_length=255, null=True, blank=True)
-    connector_type = models.CharField(max_length=100, null=True)
+    name = models.CharField(max_length=255, null=True, blank=True)
+    definition_id = models.UUIDField(null=False, blank=False)
+    definition_name = models.CharField(max_length=255, null=False, blank=False)
     creds = models.JSONField(null=True)
     status = models.CharField(max_length=50, default='active')
     type = models.CharField(max_length=100, default='source')
@@ -17,5 +18,5 @@ class Airbyte(models.Model):
     updated_at = models.DateTimeField(auto_now= True)
 
     class Meta:
-        db_table = 'airbyte'
+        db_table = 'airbyte_connectors'
         app_label = 'app'

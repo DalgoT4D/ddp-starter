@@ -2,7 +2,7 @@ from django.urls import path
 from .controllers import AuthController
 from .controllers import PublicController
 from .controllers import ProfileController
-from .controllers import AirbyteController
+from .controllers import AirbyteConnectorController
 
 urlpatterns = [
     path('auth/signup', AuthController.postSignup),
@@ -12,11 +12,13 @@ urlpatterns = [
     
     path('', PublicController.home),
 
-    path('api/airbyte', AirbyteController.getAirbyteConnections),
-    path('api/airbyte/create', AirbyteController.postAirbyteConnection),
-    path('api/airbyte/<str:connection_uuid>', AirbyteController.getAirbyteConnection),
-    path('api/airbyte/<str:connection_uuid>/update', AirbyteController.putAirbyteConnection),
-    path('api/airbyte/<str:connection_uuid>/delete', AirbyteController.deleteAirbyteConnection),
+    path('api/airbyte/connectors', AirbyteConnectorController.getAirbyteConnectors),
+    path('api/airbyte/connectors/create', AirbyteConnectorController.postAirbyteConnector),
+    path('api/airbyte/source_definitions', AirbyteConnectorController.getAirbyteSourceDefinitions),
+    path('api/airbyte/source_definitions/<str:definition_uuid>/specs', AirbyteConnectorController.getAirbyteSourceDefinitionSpecs),
+    path('api/airbyte/connectors/<str:connector_uuid>', AirbyteConnectorController.getAirbyteConnector),
+    path('api/airbyte/connectors/<str:connector_uuid>/update', AirbyteConnectorController.putAirbyteConnector),
+    path('api/airbyte/connectors/<str:connector_uuid>/delete', AirbyteConnectorController.deleteAirbyteConnector),
 
     path('api/public/organisations', PublicController.getOrganisations)
 ]
