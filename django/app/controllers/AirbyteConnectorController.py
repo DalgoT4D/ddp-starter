@@ -230,7 +230,6 @@ def getAirbyteConnectorDefinitionSpecs(request, definition_uuid):
             query['type'] = request.GET.get('type')
 
         data = {}
-
         if query['type'] == 'source':
             data = fetchSourceDefinitionSpecs(definition_uuid, organisation.airbyte_workspace_id)
         else:
@@ -267,11 +266,6 @@ def postAirbyteDefaultDestinationConnector(request):
         if(organisation is None):
             raise CustomException('Organisation not mapped', 422)
 
-        print(destination['default']['destinationDefinitionId'],
-            organisation.airbyte_workspace_id,
-            destination['default']['creds'],
-            destination['default']['name'] + ' default')
-
         # Create airbyte destination
         data = createDestination(
             destination['default']['destinationDefinitionId'],
@@ -286,7 +280,7 @@ def postAirbyteDefaultDestinationConnector(request):
             user_id=user.id,
             organisation_id=user.organisation_id,
             name=data['name'],
-            definition_id=data['destinationId'],
+            definition_id=data['destinationDefinitionId'],
             definition_name=data['destinationName'],
             creds=data['connectionConfiguration'],
             type='destination'

@@ -31,9 +31,10 @@ def fetchDestinationDefinitionSpecs(destinationDefinitionId, workspaceId):
                 'Content-Type': 'application/json'
             }
         )
+        data = res.json()
         if res.status_code != 200:
             raise CustomException('Something went wrong in deleting destination', res.status_code)
-        return True
+        return data
     except Exception as e:
         raise CustomException(str(e), e.code if isinstance(e, CustomException) else 500)
 

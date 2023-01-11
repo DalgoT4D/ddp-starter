@@ -94,8 +94,6 @@ def deleteSource(sourceId):
                 'Content-Type': 'application/json'
             }
         )
-        print(res.status_code)
-
         if res.status_code != 200 and res.status_code != 204:
             raise CustomException('Something went wrong in deleting source', res.status_code)
         return True
