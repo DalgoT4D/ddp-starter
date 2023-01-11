@@ -25,7 +25,7 @@ const Row = ({ headings, row, onDeleteConnection, onUpdateConnection }) => {
               </Typography>
             ))}
           </TableCell>
-        ) : Object.keys(header)[0] == "action" ? (
+        ) : Object.keys(header)[0] === "action" ? (
           <TableCell>
             <Button
               sx={{ minHeight: 0, minWidth: 0 }}

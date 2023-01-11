@@ -6,6 +6,8 @@ import {
   InputLabel,
   Card,
   Button,
+  Select,
+  MenuItem,
 } from "@mui/material";
 import React, { useContext, useEffect, useState } from "react";
 import { LoadingButton } from "@mui/lab";
@@ -15,35 +17,53 @@ import { ToastContext } from "../../context/toastProvider";
 import axios from "axios";
 import { errorToast, successToast } from "../../utils/toastHelper";
 import { useNavigate } from "react-router-dom";
+import AirbyteCredsInput from "./AirbyteCredsInput";
 
-const UpdateModal = ({ open, setOpen, refresh, setRefresh, uuid }) => {
+const UpdateModal = ({
+  open,
+  setOpen,
+  refresh,
+  setRefresh,
+  uuid,
+  connector_type,
+}) => {
   const [_, toastDispatch] = useContext(ToastContext);
 
-  const [creds, setCreds] = useState([{ key: "", value: "" }]);
+  const [connectorDefs, setConnectorDefs] = useState([]);
+  const [connectorDefSpecs, setConnectorDefSpecs] = useState([]);
   const navigate = useNavigate();
 
   const handleModalClose = () => {
     formik.resetForm();
+    setConnectorDefs([]);
+    setConnectorDefSpecs([]);
     setOpen(false);
   };
 
+  const formik = useFormik({
+    initialValues: {
+      connector: "",
+      definition_id: "",
+      creds: {},
+    },
+    // validationSchema: SigninValidationSchema,
+    onSubmit: (values) => {
+      onFormSubmit(values);
+    },
+  });
+
   useEffect(() => {
+    // Fetch all sources/destination definitions available from airbyte
     if (open) {
       (async () => {
         axios({
           method: "get",
-          url: `${process.env.REACT_APP_API_URL}/api/airbyte/${uuid}`,
+          url: `${process.env.REACT_APP_API_URL}/api/airbyte/connectors/definitions`,
+          params: { type: connector_type },
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         })
           .then((res) => {
-            let credsData = [];
-            formik.setFieldValue("connector", res.data.body?.connector);
-            if (res.data.body?.creds) {
-              Object.keys(res.data.body?.creds).map((key, idx) => {
-                credsData.push({ key: key, value: res.data.body?.creds[key] });
-              });
-            }
-            setCreds(credsData);
+            setConnectorDefs(res.data.body);
           })
           .catch((err) => {
             errorToast(toastDispatch, err.data.message, err.data.body);
@@ -52,50 +72,59 @@ const UpdateModal = ({ open, setOpen, refresh, setRefresh, uuid }) => {
     }
   }, [open]);
 
-  const formik = useFormik({
-    initialValues: {
-      connector: "",
-      creds: "",
-    },
-    // validationSchema: SigninValidationSchema,
-    onSubmit: (values) => {
-      onFormSubmit(values);
-    },
-  });
+  useEffect(() => {
+    // Fetch the connector
+    if (open) {
+      (async () => {
+        axios({
+          method: "get",
+          url: `${process.env.REACT_APP_API_URL}/api/airbyte/connectors/${uuid}`,
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        })
+          .then((res) => {
+            formik.setFieldValue("connector", res.data.body?.name);
+            formik.setFieldValue("definition_id", res.data.body?.definition_id);
+            formik.setFieldValue("creds", res.data.body?.creds);
+          })
+          .catch((err) => {
+            errorToast(toastDispatch, err.data.message, err.data.body);
+          });
+      })();
+    }
+  }, [connectorDefs]);
 
-  const onCredsChange = (event) => {
-    let id = event.target.id;
-    let type = event.target.name;
-    let temp = creds.slice();
-
-    temp[id] = {
-      key: type === "key" ? event.target.value : creds[id].key,
-      value: type === "value" ? event.target.value : creds[id].value,
-    };
-    setCreds(temp);
-  };
-
-  const addCredFields = (e) => {
-    setCreds([...creds, { key: "", value: "" }]);
-  };
-
-  const deleteCredFields = (idx) => {
-    setCreds(creds.filter((val, i) => i !== idx));
-  };
+  useEffect(() => {
+    // Fetch source/destination definition specs
+    if (open) {
+      (async () => {
+        axios({
+          method: "get",
+          url: `${process.env.REACT_APP_API_URL}/api/airbyte/connectors/definitions/${formik.values.definition_id}/specs`,
+          params: { type: connector_type },
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        })
+          .then((res) => {
+            // Set the connector def specs
+            setConnectorDefSpecs(res.data.body);
+          })
+          .catch((err) => {
+            errorToast(toastDispatch, err.data.message, err.data.body);
+          });
+      })();
+    }
+  }, [formik.values.definition_id]);
 
   const onFormSubmit = (values) => {
-    let credentials = {};
-    creds.map((obj, idx) => {
-      credentials[obj.key] = obj.value;
-    });
     (async () => {
       axios({
         method: "put",
-        url: `${process.env.REACT_APP_API_URL}/api/airbyte/${uuid}/update`,
+        url: `${process.env.REACT_APP_API_URL}/api/airbyte/connectors/${uuid}/update`,
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         data: {
-          ...(values.connector && { connector: values.connector }),
-          ...(creds && creds.length > 0 && { creds: credentials }),
+          name: values.connector,
+          definition_id: values.definition_id,
+          creds: values.creds,
+          type: connector_type,
         },
       })
         .then((res) => {
@@ -105,14 +134,18 @@ const UpdateModal = ({ open, setOpen, refresh, setRefresh, uuid }) => {
           navigate("/airbyte");
         })
         .catch((err) => {
-          errorToast(toastDispatch, err.data.message, err.data.body);
+          errorToast(
+            toastDispatch,
+            err.response.data.message,
+            err.response.data.body
+          );
         });
     })();
   };
 
   return (
     <>
-      <Modal open={open}>
+      <Modal open={open} sx={{ overflow: "scroll" }} onClose={handleModalClose}>
         <form onSubmit={formik.handleSubmit}>
           <Box
             sx={{
@@ -161,51 +194,38 @@ const UpdateModal = ({ open, setOpen, refresh, setRefresh, uuid }) => {
                   }
                 />
               </Box>
-              <Box sx={{ marginBottom: "16px" }}>
+              <Box marginBottom={{ marginBottom: "16px" }}>
                 <InputLabel sx={{ marginBottom: "5px" }}>
-                  Credentials
+                  Source type
                 </InputLabel>
-                <Box
-                  sx={{ display: "flex", flexDirection: "column", gap: "1rem" }}
+                <Select
+                  id="definition_id"
+                  name="definition_id"
+                  sx={{ width: "100%", background: "lightgrey" }}
+                  value={formik.values.definition_id}
+                  onChange={formik.handleChange}
+                  readOnly={true}
                 >
-                  {creds.map((cred, idx) => (
-                    <Box sx={{ display: "flex", gap: "2rem" }} key={idx}>
-                      <TextField
-                        id={idx}
-                        name="key"
-                        placeholder="Please enter the key"
-                        onChange={onCredsChange}
-                        value={cred.key}
-                      />
-                      <TextField
-                        id={idx}
-                        name="value"
-                        placeholder="Please enter the value"
-                        onChange={onCredsChange}
-                        value={cred.value}
-                      />
-                      {idx === creds.length - 1 ? (
-                        <Button
-                          sx={{
-                            color: "black",
-                          }}
-                          onClick={addCredFields}
-                        >
-                          <Add />
-                        </Button>
-                      ) : (
-                        <Button
-                          id={idx}
-                          sx={{
-                            color: "black",
-                          }}
-                          onClick={() => deleteCredFields(idx)}
-                        >
-                          <Delete />
-                        </Button>
-                      )}
-                    </Box>
+                  {connectorDefs.map((connectorDef, idx) => (
+                    <MenuItem key={idx} value={connectorDef.uuid}>
+                      {connectorDef.name}
+                    </MenuItem>
                   ))}
+                </Select>
+              </Box>
+              <Box sx={{ marginBottom: "16px" }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "1rem",
+                  }}
+                >
+                  <AirbyteCredsInput
+                    specs={connectorDefSpecs}
+                    setSpecs={setConnectorDefSpecs}
+                    formik={formik}
+                  />
                 </Box>
               </Box>
               <LoadingButton
@@ -224,7 +244,7 @@ const UpdateModal = ({ open, setOpen, refresh, setRefresh, uuid }) => {
                 loading={false}
                 type="submit"
               >
-                Update connection
+                Update connector
               </LoadingButton>
             </Card>
           </Box>

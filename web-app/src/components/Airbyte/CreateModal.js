@@ -19,22 +19,30 @@ import { errorToast, successToast } from "../../utils/toastHelper";
 import { useNavigate } from "react-router-dom";
 import AirbyteCredsInput from "./AirbyteCredsInput";
 
-const CreateModal = ({ open, setOpen, refresh, setRefresh }) => {
+const CreateModal = ({
+  open,
+  setOpen,
+  refresh,
+  setRefresh,
+  connector_type,
+}) => {
   const [_, toastDispatch] = useContext(ToastContext);
 
-  const [sourceDefs, setSourceDefs] = useState([]);
-  const [sourceDefSpecs, setSourceDefSpecs] = useState([]);
+  const [connectorDefs, setConnectorDefs] = useState([]);
+  const [connectorDefSpecs, setConnectorDefSpecs] = useState([]);
   const navigate = useNavigate();
 
   const handleModalClose = () => {
     formik.resetForm();
+    setConnectorDefs([]);
+    setConnectorDefSpecs([]);
     setOpen(false);
   };
 
   const formik = useFormik({
     initialValues: {
       connector: "",
-      source_definition_id: "",
+      definition_id: "",
       creds: {},
     },
     // validationSchema: SigninValidationSchema,
@@ -47,12 +55,13 @@ const CreateModal = ({ open, setOpen, refresh, setRefresh }) => {
     (async () => {
       axios({
         method: "post",
-        url: `${process.env.REACT_APP_API_URL}/api/airbyte/create`,
+        url: `${process.env.REACT_APP_API_URL}/api/airbyte/connectors/create`,
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         data: {
-          connector: values.connector,
-          source_definition_id: values.source_definition_id,
+          name: values.connector,
+          definition_id: values.definition_id,
           creds: values.creds,
+          type: connector_type,
         },
       })
         .then((res) => {
@@ -62,22 +71,27 @@ const CreateModal = ({ open, setOpen, refresh, setRefresh }) => {
           navigate("/airbyte");
         })
         .catch((err) => {
-          errorToast(toastDispatch, err.data.message, err.data.body);
+          errorToast(
+            toastDispatch,
+            err.response.data.message,
+            err.response.data.body
+          );
         });
     })();
   };
 
   useEffect(() => {
-    // Fetch all source available from airbyte
+    // Fetch all sources/destination definitions available from airbyte
     if (open) {
       (async () => {
         axios({
           method: "get",
-          url: `${process.env.REACT_APP_API_URL}/api/airbyte/source_definitions`,
+          url: `${process.env.REACT_APP_API_URL}/api/airbyte/connectors/definitions`,
+          params: { type: connector_type },
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         })
           .then((res) => {
-            setSourceDefs(res.data.body);
+            setConnectorDefs(res.data.body);
           })
           .catch((err) => {
             errorToast(toastDispatch, err.data.message, err.data.body);
@@ -87,12 +101,13 @@ const CreateModal = ({ open, setOpen, refresh, setRefresh }) => {
   }, [open]);
 
   useEffect(() => {
-    // Fetch source definition specs
-    if (formik.values.source_definition_id) {
+    // Fetch source/destination definition specs
+    if (open && formik.values.definition_id) {
       (async () => {
         axios({
           method: "get",
-          url: `${process.env.REACT_APP_API_URL}/api/airbyte/source_definitions/${formik.values.source_definition_id}/specs`,
+          url: `${process.env.REACT_APP_API_URL}/api/airbyte/connectors/definitions/${formik.values.definition_id}/specs`,
+          params: { type: connector_type },
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         })
           .then((res) => {
@@ -106,22 +121,25 @@ const CreateModal = ({ open, setOpen, refresh, setRefresh }) => {
                 case "array":
                   temp[`${property.field}`] = [];
                   break;
+                case "integer":
+                  temp[`${property.field}`] = null;
+                  break;
               }
             }
             formik.setFieldValue("creds", temp);
-            // Set the source def specs
-            setSourceDefSpecs(res.data.body);
+            // Set the def specs
+            setConnectorDefSpecs(res.data.body);
           })
           .catch((err) => {
             errorToast(toastDispatch, err.data.message, err.data.body);
           });
       })();
     }
-  }, [formik.values.source_definition_id]);
+  }, [formik.values.definition_id]);
 
   return (
     <>
-      <Modal open={open} sx={{ overflow: "scroll" }}>
+      <Modal open={open} sx={{ overflow: "scroll" }} onClose={handleModalClose}>
         <form onSubmit={formik.handleSubmit}>
           <Box
             sx={{
@@ -153,13 +171,13 @@ const CreateModal = ({ open, setOpen, refresh, setRefresh }) => {
 
               <Box sx={{ marginBottom: "16px" }}>
                 <InputLabel sx={{ marginBottom: "5px" }}>
-                  Source name
+                  Connector name
                 </InputLabel>
                 <TextField
                   fullWidth
                   id="connector"
                   name="connector"
-                  placeholder="Please enter the source connector name"
+                  placeholder="Please enter the connector name"
                   onChange={formik.handleChange}
                   value={formik.values.connector}
                   error={
@@ -172,18 +190,19 @@ const CreateModal = ({ open, setOpen, refresh, setRefresh }) => {
               </Box>
               <Box marginBottom={{ marginBottom: "16px" }}>
                 <InputLabel sx={{ marginBottom: "5px" }}>
-                  Source type
+                  Connector type
                 </InputLabel>
                 <Select
-                  id="source_definition_id"
-                  name="source_definition_id"
+                  id="definition_id"
+                  name="definition_id"
                   sx={{ width: "100%" }}
-                  value={formik.values.source_definition_id}
+                  value={formik.values.definition_id}
                   onChange={formik.handleChange}
+                  placeholder="Select connector definition"
                 >
-                  {sourceDefs.map((sourceDef, idx) => (
-                    <MenuItem key={idx} value={sourceDef.sourceDefinitionId}>
-                      {sourceDef.name}
+                  {connectorDefs.map((connectorDef, idx) => (
+                    <MenuItem key={idx} value={connectorDef.uuid}>
+                      {connectorDef.name}
                     </MenuItem>
                   ))}
                 </Select>
@@ -197,8 +216,8 @@ const CreateModal = ({ open, setOpen, refresh, setRefresh }) => {
                   }}
                 >
                   <AirbyteCredsInput
-                    specs={sourceDefSpecs}
-                    setSpecs={setSourceDefSpecs}
+                    specs={connectorDefSpecs}
+                    setSpecs={setConnectorDefSpecs}
                     formik={formik}
                   />
                 </Box>
@@ -219,7 +238,7 @@ const CreateModal = ({ open, setOpen, refresh, setRefresh }) => {
                 loading={false}
                 type="submit"
               >
-                Add Connection
+                Creat a New {connector_type}
               </LoadingButton>
             </Card>
           </Box>

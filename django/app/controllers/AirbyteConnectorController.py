@@ -20,6 +20,10 @@ from ..models.Organisation import Organisation
 
 # Airbyte api services
 from services.airbyte.SourceService import *
+from services.airbyte.DestinationService import *
+
+# Config
+from utils.config.config import destination
 
 @api_view(['POST'])
 def postAirbyteConnector(request):
@@ -33,12 +37,30 @@ def postAirbyteConnector(request):
         if validation.is_valid() is not True:
             return api_error('', validation.errors)
 
+        organisation = Organisation.objects.filter(id=user.organisation_id).first()
+
+        if(organisation is None):
+            raise CustomException('Organisation not mapped', 422)
+
+        credentials = {}
+        for key, value in validation.data['creds'].items():
+            if value != "" and value is not None:
+                credentials[key] = value
+
+        # Create airbyte source/destination
+        data = {}
+        if(validation.data['type'] == 'source'):
+            data = createSource(validation.data['definition_id'], organisation.airbyte_workspace_id, credentials, validation.data['name'])
+        else:
+            data = createDestination(validation.data['definition_id'], organisation.airbyte_workspace_id, credentials, validation.data['name'])
+
         airbyteConnector = AirbyteConnector(
+            uuid=data['sourceId'] if validation.data['type'] == 'source' else data['destinationId'],
             user_id=user.id,
             organisation_id=user.organisation_id,
-            name=validation.data['name'],
-            definition_id=validation.data['definition_id'],
-            definition_name=validation.data['definition_name'],
+            name=data['name'],
+            definition_id=data['sourceDefinitionId'] if validation.data['type'] == 'source' else data['destinationDefinitionId'],
+            definition_name=data['sourceName'] if validation.data['type'] == 'source' else data['destinationName'],
             creds=validation.data['creds'],
             type=validation.data['type']
         )
@@ -98,6 +120,11 @@ def putAirbyteConnector(request, connector_uuid):
 
         if isinstance(user, Response):
             return user
+        
+        organisation = Organisation.objects.filter(id=user.organisation_id).first()
+
+        if(organisation is None):
+            raise CustomException('Organisation not mapped', 422)
 
         validation = AirbyteConnectorRequest.putAirbyteConnector(data=request.data)
         if validation.is_valid() is not True:
@@ -112,18 +139,24 @@ def putAirbyteConnector(request, connector_uuid):
 
         if(connector is None):
             raise CustomException('Connector does not exist', 401)
-            
+
+        credentials = {}
+        for key, value in validation.data['creds'].items():
+            if value != "" and value is not None:
+                credentials[key] = value
+
+        if(validation.data['type'] == 'source'):
+            updateSource(str(connector.uuid), credentials, validation.data['name'])
+        else:
+            updateDestination(str(connector.uuid), credentials, validation.data['name'])
+
         connector.name = validation.data['name'] if('name' in validation.data.keys()) else connector.name
         connector.creds = validation.data['creds'] if('creds' in validation.data.keys() and len(validation.data['creds']) > 0) else connector.creds
-        connector.definition_id = validation.data['definition_id'] if('definition_id' in validation.data.keys()) else connector.definition_id
-        connector.definition_name = validation.data['definition_name'] if('definition_name' in validation.data.keys()) else connector.definition_name
-        connector.type = validation.data['type'] if('type' in validation.data.keys()) else connector.type
         connector.save()
 
         return api('Airbyte connector updated succesfully', {'connector': connector.name, 'creds': connector.creds, 'type': connector.type, 'status': connector.status, 'uuid': connector.uuid})
     except Exception as e:
         return api_error(str(e), {}, e.code if isinstance(e, CustomException) else 500)
-
 
 @api_view(['DELETE'])
 def deleteAirbyteConnector(request, connector_uuid):
@@ -143,30 +176,43 @@ def deleteAirbyteConnector(request, connector_uuid):
         if(connector is None):
             raise CustomException('Connector does not exist', 404)
 
+        if connector.type == 'source':
+            res = deleteSource(connector.uuid)
+        else:
+            res = deleteDestination(connector.uuid)
+
         connector.delete()
 
         return api('Airbyte connector deleted succesfully', {})
     except Exception as e:
         return api_error(str(e), {}, e.code if isinstance(e, CustomException) else 500)
 
-
 @api_view(['GET'])
-def getAirbyteSourceDefinitions(request):
+def getAirbyteConnectorDefinitions(request):
     try:
         user = authenticate(request)
 
         if isinstance(user, Response):
             return user
 
-        res = fetchSourceDefinitions()
+        query = { 'type': 'source' }
 
-        return api('Airbyte source definitions', res['sourceDefinitions'])
+        if (request.GET.get('type')):
+            query['type'] = request.GET.get('type')
+
+        definitions = fetchSourceDefinitions() if query['type'] == 'source' else fetchDestinationDefinitions()
+
+        apiRes = definitions['sourceDefinitions' if query['type'] == 'source' else 'destinationDefinitions']
+
+        for defObj in apiRes:
+            defObj['uuid'] = defObj['sourceDefinitionId' if query['type'] == 'source' else 'destinationDefinitionId']
+
+        return api('Airbyte connector definitions fetched', apiRes)
     except Exception as e:
         return api_error(str(e), {}, e.code if isinstance(e, CustomException) else 500)
 
-
 @api_view(['GET'])
-def getAirbyteSourceDefinitionSpecs(request, definition_uuid):
+def getAirbyteConnectorDefinitionSpecs(request, definition_uuid):
     try:
         user = authenticate(request)
 
@@ -178,21 +224,75 @@ def getAirbyteSourceDefinitionSpecs(request, definition_uuid):
         if(organisation is None):
             raise CustomException('Please make sure the user is mapped to an organisation', 422)
 
-        data = fetchSourceDefinitionSpecs(definition_uuid, organisation.airbyte_workspace_id)
+        query = { 'type': 'source' }
+
+        if (request.GET.get('type')):
+            query['type'] = request.GET.get('type')
+
+        data = {}
+
+        if query['type'] == 'source':
+            data = fetchSourceDefinitionSpecs(definition_uuid, organisation.airbyte_workspace_id)
+        else:
+            data = fetchDestinationDefinitionSpecs(definition_uuid, organisation.airbyte_workspace_id)
 
         connectionConfig = data['connectionSpecification']
 
-        data = []
+        apiRes = []
         for key, value in connectionConfig['properties'].items():
             if key in connectionConfig['required']:
                 value['required'] = True
             else:
                 value['required'] = False
             value['field'] = key
-            data.append(value)
+            apiRes.append(value)
 
-        data.sort(key=lambda x: x['order'])
+        apiRes.sort(key=lambda x: x['order'] if 'order' in x.keys() else 0)
 
-        return api('Airbyte source definitions', data)
+        return api('Airbyte connector definition specs fetched', apiRes)
+    except Exception as e:
+        return api_error(str(e), {}, e.code if isinstance(e, CustomException) else 500)
+
+
+@api_view(['POST'])
+def postAirbyteDefaultDestinationConnector(request):
+    try:
+        user = authenticate(request)
+
+        if isinstance(user, Response):
+            return user
+
+        organisation = Organisation.objects.filter(id=user.organisation_id).first()
+
+        if(organisation is None):
+            raise CustomException('Organisation not mapped', 422)
+
+        print(destination['default']['destinationDefinitionId'],
+            organisation.airbyte_workspace_id,
+            destination['default']['creds'],
+            destination['default']['name'] + ' default')
+
+        # Create airbyte destination
+        data = createDestination(
+            destination['default']['destinationDefinitionId'],
+            organisation.airbyte_workspace_id,
+            destination['default']['creds'],
+            destination['default']['name'] + ' default'
+        )
+
+
+        airbyteConnector = AirbyteConnector(
+            uuid=data['destinationId'],
+            user_id=user.id,
+            organisation_id=user.organisation_id,
+            name=data['name'],
+            definition_id=data['destinationId'],
+            definition_name=data['destinationName'],
+            creds=data['connectionConfiguration'],
+            type='destination'
+        )
+        airbyteConnector.save()
+
+        return api('Airbyte connector details saved successfully', {})
     except Exception as e:
         return api_error(str(e), {}, e.code if isinstance(e, CustomException) else 500)

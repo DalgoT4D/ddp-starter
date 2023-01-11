@@ -23,14 +23,6 @@ class postAirbyteConnector(serializers.Serializer):
             'blank': 'Please select the source type',
         }
     )
-    definition_name = serializers.CharField(
-        required=True,
-        allow_blank=False,
-        error_messages={
-            'required': 'Please select the type of the connector',
-            'blank': 'Please select the type of the connector'
-        }
-    )
     type = serializers.CharField(
         required=True,
         error_messages={
@@ -57,14 +49,6 @@ class putAirbyteConnector(serializers.Serializer):
         error_messages={
             'required': 'Please select the source type',
             'blank': 'Please select the source type',
-        }
-    )
-    definition_name = serializers.CharField(
-        required=False,
-        allow_blank=False,
-        error_messages={
-            'required': 'Please select the type of the connector',
-            'blank': 'Please select the type of the connector'
         }
     )
     type = serializers.CharField(

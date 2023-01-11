@@ -9,9 +9,9 @@ airbyte_uri = os.getenv('AIRBYTE_API_URL')
 username = os.getenv('AIRBYTE_USERNAME')
 password = os.getenv('AIRBYTE_PASSWORD')
 
-def fetchSourceDefinitions():
+def fetchDestinationDefinitions():
     try:
-        res = requests.post(airbyte_uri + '/source_definitions/list', auth=(username, password), headers={
+        res = requests.post(airbyte_uri + '/destination_definitions/list', auth=(username, password), headers={
             'Content-Type': 'application/json'
         })
         data = res.json()
@@ -21,33 +21,32 @@ def fetchSourceDefinitions():
     except Exception as e:
         raise CustomException(str(e), e.code if isinstance(e, CustomException) else 500)
 
-def fetchSourceDefinitionSpecs(sourceDefinitionId, workspaceId):
+def fetchDestinationDefinitionSpecs(destinationDefinitionId, workspaceId):
     try:
-        payload = json.dumps({ "sourceDefinitionId": sourceDefinitionId, "workspaceId": workspaceId  })
-        res = requests.post(airbyte_uri + '/source_definition_specifications/get', 
+        payload = json.dumps({ "destinationDefinitionId": destinationDefinitionId, "workspaceId": workspaceId  })
+        res = requests.post(airbyte_uri + '/destination_definition_specifications/get', 
             auth=(username, password), 
             data=payload,
             headers={
                 'Content-Type': 'application/json'
             }
         )
-        data = res.json()
         if res.status_code != 200:
-            raise CustomException(data['message'], res.status_code)
-        return res.json()
+            raise CustomException('Something went wrong in deleting destination', res.status_code)
+        return True
     except Exception as e:
         raise CustomException(str(e), e.code if isinstance(e, CustomException) else 500)
 
 
-def createSource(sourceDefinitionId, workspaceId, connectionConfiguration, name):
+def createDestination(destinationDefinitionId, workspaceId, connectionConfiguration, name):
     try:
         payload = json.dumps({ 
-            "sourceDefinitionId": str(sourceDefinitionId), 
+            "destinationDefinitionId": str(destinationDefinitionId), 
             "workspaceId": workspaceId, 
             "connectionConfiguration": connectionConfiguration, 
             "name": name  
         })
-        res = requests.post(airbyte_uri + '/sources/create', 
+        res = requests.post(airbyte_uri + '/destinations/create', 
             auth=(username, password), 
             data=payload,
             headers={
@@ -61,14 +60,14 @@ def createSource(sourceDefinitionId, workspaceId, connectionConfiguration, name)
     except Exception as e:
         raise CustomException(str(e), e.code if isinstance(e, CustomException) else 500)
 
-def updateSource(sourceId, connectionConfiguration, name):
+def updateDestination(destinationId, connectionConfiguration, name):
     try:
         payload = json.dumps({ 
-            "sourceId": str(sourceId),
+            "destinationId": str(destinationId),
             "connectionConfiguration": connectionConfiguration, 
             "name": name  
         })
-        res = requests.post(airbyte_uri + '/sources/update', 
+        res = requests.post(airbyte_uri + '/destinations/update', 
             auth=(username, password), 
             data=payload,
             headers={
@@ -82,22 +81,21 @@ def updateSource(sourceId, connectionConfiguration, name):
     except Exception as e:
         raise CustomException(str(e), e.code if isinstance(e, CustomException) else 500)
 
-def deleteSource(sourceId):
+def deleteDestination(destinationId):
     try:
         payload = json.dumps({ 
-            "sourceId": str(sourceId)
+            "destinationId": str(destinationId)
         })
-        res = requests.post(airbyte_uri + '/sources/delete', 
+        res = requests.post(airbyte_uri + '/destinations/delete', 
             auth=(username, password), 
             data=payload,
             headers={
                 'Content-Type': 'application/json'
             }
         )
-        print(res.status_code)
-
         if res.status_code != 200 and res.status_code != 204:
-            raise CustomException('Something went wrong in deleting source', res.status_code)
+            raise CustomException('Something went wrong in deleting destination', res.status_code)
         return True
     except Exception as e:
         raise CustomException(str(e), e.code if isinstance(e, CustomException) else 500)
+

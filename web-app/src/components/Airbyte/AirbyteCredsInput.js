@@ -7,7 +7,6 @@ const AirbyteCredsInput = ({ specs, setSpecs, formik }) => {
     let creds = formik.values.creds;
     creds[name] = value;
     formik.setFieldValue("creds", creds);
-    console.log(formik.values);
   };
 
   const handleTextInputChange = (e) => {
@@ -20,36 +19,44 @@ const AirbyteCredsInput = ({ specs, setSpecs, formik }) => {
 
   return (
     <>
-      {specs.map((spec, idx) =>
-        spec.type == "string" ? (
-          <Box sx={{ display: "flex", flexDirection: "column" }} key={idx}>
-            <InputLabel sx={{ marginBottom: "5px" }}>
-              {(spec.title ? spec.title : spec.field) +
-                (spec.required ? " *" : "")}
-            </InputLabel>
-            <TextField
-              id={idx}
+      {specs
+        .filter(
+          (spec) =>
+            spec.type === "string" ||
+            spec.type === "array" ||
+            spec.type === "integer"
+        )
+        .map((spec, idx) =>
+          spec.type === "string" || spec.type === "integer" ? (
+            <Box sx={{ display: "flex", flexDirection: "column" }} key={idx}>
+              <InputLabel sx={{ marginBottom: "5px" }}>
+                {(spec.title ? spec.title : spec.field) +
+                  (spec.required ? " *" : "")}
+              </InputLabel>
+              <TextField
+                id={idx}
+                key={idx}
+                type={spec.type === "integer" ? "number" : "text"}
+                name={spec?.field}
+                value={formik.values.creds[`${spec.field}`]}
+                placeholder={spec?.description}
+                sx={{ width: "100%" }}
+                onChange={handleTextInputChange}
+              />
+            </Box>
+          ) : (
+            <MultiTagInput
+              idx={idx}
               key={idx}
               name={spec.field}
+              label={spec.title ? spec.title : spec.field}
+              placeholder={spec?.description}
+              required={spec?.required}
+              onArrayInputChange={handleArrayInputChange}
               value={formik.values.creds[`${spec.field}`]}
-              placeholder={spec.description}
-              sx={{ width: "100%" }}
-              onChange={handleTextInputChange}
             />
-          </Box>
-        ) : (
-          <MultiTagInput
-            idx={idx}
-            key={idx}
-            name={spec.field}
-            label={spec.title ? spec.title : spec.field}
-            placeholder={spec.description}
-            required={spec.required}
-            onArrayInputChange={handleArrayInputChange}
-            value={formik.values.creds[`${spec.field}`]}
-          />
-        )
-      )}
+          )
+        )}
     </>
   );
 };
