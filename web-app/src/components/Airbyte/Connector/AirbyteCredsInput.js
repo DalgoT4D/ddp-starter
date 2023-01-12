@@ -1,6 +1,6 @@
 import { Box, InputLabel, TextField } from "@mui/material";
 import React from "react";
-import MultiTagInput from "../../common/input/MultiTagInput";
+import MultiTagInput from "../../../common/input/MultiTagInput";
 
 const AirbyteCredsInput = ({ specs, setSpecs, formik }) => {
   const handleCredsInputChange = (name, value) => {

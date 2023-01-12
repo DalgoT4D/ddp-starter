@@ -10,64 +10,51 @@ import {
   TableFooter,
   Button,
 } from "@mui/material";
-import moment from "moment";
 import { Delete, Edit } from "@mui/icons-material";
 
-const Row = ({ headings, row, onDeleteConnection, onUpdateConnection }) => {
+const Row = ({ headings, row, onDeleteRow, onUpdateRow }) => {
   return (
     <TableRow>
       {headings.map((header, idx) =>
-        Object.keys(header)[0] === "creds" ? (
+        header?.type && header?.type === "object" ? (
           <TableCell>
-            {Object.keys(row["creds"]).map((obj_key, idx) => (
+            {Object.keys(row[header.field]).map((obj_key, idx) => (
               <Typography component="p" key={idx}>
-                {obj_key + ": " + row["creds"][obj_key]}
+                {obj_key + ": " + row[header.field][obj_key]}
               </Typography>
             ))}
           </TableCell>
-        ) : Object.keys(header)[0] === "action" ? (
+        ) : header.field === "action" ? (
           <TableCell>
             <Button
               sx={{ minHeight: 0, minWidth: 0 }}
-              onClick={() => onDeleteConnection(row.uuid)}
+              onClick={() => onDeleteRow(row.uuid)}
             >
               <Delete />
             </Button>
             <Button
               sx={{ minHeight: 0, minWidth: 0 }}
-              onClick={() => onUpdateConnection(row.uuid)}
+              onClick={() => onUpdateRow(row.uuid)}
             >
               <Edit />
             </Button>
           </TableCell>
         ) : (
-          <TableCell key={idx}>{row[Object.keys(header)[0]]}</TableCell>
+          <TableCell key={idx}>{row[header.field]}</TableCell>
         )
       )}
     </TableRow>
   );
 };
 
-const DataTable = ({
-  headings,
-  rows,
-  onDeleteConnection,
-  onUpdateConnection,
-}) => {
-  rows = rows.map((row, idx) => {
-    return {
-      ...row,
-      created_at: moment(row["created_at"]).format("DD-MM-YYYY"),
-    };
-  });
-
+const DataTable = ({ headings, rows, onDeleteRow, onUpdateRow }) => {
   return (
     <Box sx={{}}>
       <Table>
         <TableHead>
           <TableRow>
             {headings.map((header, idx) => (
-              <TableCell key={idx}>{header[Object.keys(header)[0]]}</TableCell>
+              <TableCell key={idx}>{header.name}</TableCell>
             ))}
           </TableRow>
         </TableHead>
@@ -77,8 +64,8 @@ const DataTable = ({
               key={idx}
               headings={headings}
               row={row}
-              onDeleteConnection={onDeleteConnection}
-              onUpdateConnection={onUpdateConnection}
+              onDeleteRow={onDeleteRow}
+              onUpdateRow={onUpdateRow}
             />
           ))}
         </TableBody>

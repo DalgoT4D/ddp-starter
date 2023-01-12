@@ -13,9 +13,9 @@ import React, { useContext, useEffect, useState } from "react";
 import { LoadingButton } from "@mui/lab";
 import { useFormik } from "formik";
 import { Close, Add, Delete } from "@mui/icons-material";
-import { ToastContext } from "../../context/toastProvider";
+import { ToastContext } from "../../../context/toastProvider";
 import axios from "axios";
-import { errorToast, successToast } from "../../utils/toastHelper";
+import { errorToast, successToast } from "../../../utils/toastHelper";
 import { useNavigate } from "react-router-dom";
 import AirbyteCredsInput from "./AirbyteCredsInput";
 
