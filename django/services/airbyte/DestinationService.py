@@ -45,7 +45,7 @@ def createDestination(destinationDefinitionId, workspaceId, connectionConfigurat
             "destinationDefinitionId": str(destinationDefinitionId), 
             "workspaceId": workspaceId, 
             "connectionConfiguration": connectionConfiguration, 
-            "name": name  
+            "name": name
         })
         res = requests.post(airbyte_uri + '/destinations/create', 
             auth=(username, password), 

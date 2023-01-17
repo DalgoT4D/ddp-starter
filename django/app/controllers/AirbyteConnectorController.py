@@ -85,7 +85,7 @@ def getAirbyteConnectors(request):
         if (request.GET.get('type')):
             query['type'] = request.GET.get('type')
 
-        connectors = AirbyteConnector.objects.filter(**query).order_by('-created_at').values('uuid', 'name', 'definition_id', 'definition_name', 'creds', 'status', 'created_at')
+        connectors = AirbyteConnector.objects.filter(**query).order_by('-created_at').values('uuid', 'name', 'definition_id', 'definition_name', 'creds', 'type', 'status', 'created_at')
 
         return api('Airbyte connectors fetched succesfully', connectors)
     except Exception as e:
@@ -265,6 +265,14 @@ def postAirbyteDefaultDestinationConnector(request):
 
         if(organisation is None):
             raise CustomException('Organisation not mapped', 422)
+
+        destination['default']['creds']['ssl_mode'] = {
+            "mode": "disable"
+        }
+
+        destination['default']['creds']['tunnel_method'] = {
+            "tunnel_method": "NO_TUNNEL"
+        }
 
         # Create airbyte destination
         data = createDestination(
