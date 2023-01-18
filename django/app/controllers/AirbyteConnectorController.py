@@ -85,7 +85,9 @@ def getAirbyteConnectors(request):
         if (request.GET.get('type')):
             query['type'] = request.GET.get('type')
 
-        connectors = AirbyteConnector.objects.filter(**query).order_by('-created_at').prefetch_related('source')
+        connectors = AirbyteConnector.objects.filter(**query).order_by('-created_at').values('uuid', 'name', 'definition_id', 'definition_name', 'creds', 'status', 'type')
+
+        print(connectors)
 
         return api('Airbyte connectors fetched succesfully', connectors)
     except Exception as e:
