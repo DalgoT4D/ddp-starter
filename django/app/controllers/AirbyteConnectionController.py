@@ -17,6 +17,7 @@ from ..validators import AirbyteConnectionRequest
 # Models
 from ..models.AirbyteConnector import AirbyteConnector
 from ..models.Organisation import Organisation
+from ..models.AirbyteConnection import AirbyteConnection
 
 # Airbyte api services
 from services.airbyte.SourceService import *
@@ -104,7 +105,36 @@ def postSourceAndConnection(request):
         schemaData = discoverSourceSchema(source.uuid)
 
         # Create connection between source and destination (default for now)
-        data = createConnection(source.uuid, destination.uuid, schemaData['catalog'])
+        data = createConnection(source.uuid, destination.uuid, schemaData['catalog'], schemaData['catalogId'])
+
+        connection = AirbyteConnection(
+            uuid=data['connectionId'],
+            user_id=user.id,
+            organisation_id=organisation.id,
+            source_id=source.id,
+            destination_id=destination.id
+        )
+        connection.save()
+
+        return api('Source created and connection established to warehouse', {})
+    except Exception as e:
+        return api_error(str(e), {}, e.code if isinstance(e, CustomException) else 500)
+
+
+@api_view(['POST'])
+def postSyncDataForConnection(request, connection_uuid):
+    try:
+        user = authenticate(request)
+
+        if isinstance(user, Response):
+            return user
+
+        organisation = Organisation.objects.filter(id=user.organisation_id).first()
+
+        if(organisation is None):
+            raise CustomException('Organisation not mapped', 422)
+
+        data = triggerDataSync(connection_uuid)
 
         return api('Source created and connection established to warehouse', {})
     except Exception as e:

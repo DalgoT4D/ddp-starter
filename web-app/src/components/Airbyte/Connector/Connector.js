@@ -19,6 +19,7 @@ const Connector = ({ connector_type }) => {
   const [openUpdateModal, setOpenUpdateModal] = useState(false);
   const [uuid, setUuid] = useState("");
   const [destinationDialogBox, setDestinationDialogBox] = useState(false);
+  const [syncButtonLoading, setSyncButtonLoading] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -98,6 +99,28 @@ const Connector = ({ connector_type }) => {
     })();
   };
 
+  const handleSyncButtonClick = (connection_uuid) => {
+    setSyncButtonLoading(true);
+    // Trigger manual data sync
+    (async () => {
+      axios({
+        method: "post",
+        url: `${process.env.REACT_APP_API_URL}/api/airbyte/connections/${connection_uuid}/sync`,
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      })
+        .then((res) => {
+          successToast(toastDispatch, res.data.message);
+        })
+        .catch((err) => {
+          errorToast(
+            toastDispatch,
+            err.response.data.message,
+            err.response.data.body
+          );
+        });
+    })();
+  };
+
   const headings = {
     source: [
       { name: "Name", field: "name" },
@@ -107,7 +130,7 @@ const Connector = ({ connector_type }) => {
       },
       { name: "Credentials", field: "creds", type: "object" },
       { name: "Status", field: "status" },
-      { name: "Added_on", field: "created_at" },
+      { name: "Added On", field: "created_at", type: "date" },
       { name: "Action", field: "action" },
     ],
     destination: [
@@ -118,7 +141,7 @@ const Connector = ({ connector_type }) => {
       },
       { name: "Credentials", field: "creds", type: "object" },
       { name: "Status", field: "status" },
-      { name: "Added_on", field: "created_at" },
+      { name: "Added On", field: "created_at", type: "date" },
       { name: "Action", field: "action" },
     ],
   };
@@ -139,6 +162,11 @@ const Connector = ({ connector_type }) => {
               headings={headings[connector_type]}
               onDeleteRow={handleDeleteConnector}
               onUpdateRow={handleUpdateButtonClick}
+              customActionButton={{
+                label: "Sync Now",
+                handler: handleSyncButtonClick,
+                loading: syncButtonLoading,
+              }}
             />
             <Button
               sx={{

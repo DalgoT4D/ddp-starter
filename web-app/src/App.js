@@ -7,6 +7,7 @@ import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Airbyte from "./pages/Airbyte";
 import Dbt from "./pages/Dbt";
+import Analysis from "./pages/Analysis";
 
 function App() {
   return (
@@ -18,7 +19,8 @@ function App() {
           <Route path="/signup" element={<Register />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/airbyte" element={<Airbyte />} />
-          <Route path="/dbt" element={<Dbt />} />
+          <Route path="/transformation" element={<Dbt />} />
+          <Route path="/analysis" element={<Analysis />} />
         </Routes>
       </Router>
     </>

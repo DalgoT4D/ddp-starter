@@ -2,21 +2,18 @@ import uuid
 from django.db import models
 from .User import User
 from .Organisation import Organisation
+from .AirbyteConnector import AirbyteConnector
 
 # Create your models here.
-class AirbyteConnector(models.Model):
+class AirbyteConnection(models.Model):
     uuid = models.CharField(max_length=100)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     organisation = models.ForeignKey(Organisation, on_delete=models.CASCADE)
-    name = models.CharField(max_length=255, null=True, blank=True)
-    definition_id = models.UUIDField(null=False, blank=False)
-    definition_name = models.CharField(max_length=255, null=False, blank=False)
-    creds = models.JSONField(null=True)
-    status = models.CharField(max_length=50, default='active')
-    type = models.CharField(max_length=100, default='source')
+    source = models.ForeignKey(AirbyteConnector, on_delete=models.CASCADE, related_name='source')
+    destination = models.ForeignKey(AirbyteConnector, on_delete=models.CASCADE, related_name='destination')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now= True)
 
     class Meta:
-        db_table = 'airbyte_connectors'
+        db_table = 'airbyte_connections'
         app_label = 'app'

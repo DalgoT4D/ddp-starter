@@ -10,6 +10,7 @@ import {
   TableFooter,
   Button,
 } from "@mui/material";
+import moment from "moment";
 import { Delete, Edit } from "@mui/icons-material";
 
 const Row = ({ headings, row, onDeleteRow, onUpdateRow }) => {
@@ -23,6 +24,10 @@ const Row = ({ headings, row, onDeleteRow, onUpdateRow }) => {
                 {obj_key + ": " + row[header.field][obj_key]}
               </Typography>
             ))}
+          </TableCell>
+        ) : header?.type && header?.type === "date" ? (
+          <TableCell key={idx}>
+            {moment(row[header.field]).format("DD-MM-YYYY")}
           </TableCell>
         ) : header.field === "action" ? (
           <TableCell>
@@ -47,7 +52,13 @@ const Row = ({ headings, row, onDeleteRow, onUpdateRow }) => {
   );
 };
 
-const DataTable = ({ headings, rows, onDeleteRow, onUpdateRow }) => {
+const DataTable = ({
+  headings,
+  rows,
+  onDeleteRow,
+  onUpdateRow,
+  customActionButton,
+}) => {
   return (
     <Box sx={{}}>
       <Table>

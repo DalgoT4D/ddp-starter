@@ -15,6 +15,7 @@ urlpatterns = [
 
     # path('api/airbyte/connections', AirbyteConnectionController.postDiscoverSourceSchema),
     path('api/airbyte/connections/sources', AirbyteConnectionController.postSourceAndConnection),
+    path('api/airbyte/connections/<str:connection_uuid>/sync', AirbyteConnectionController.postSyncDataForConnection),
 
     path('api/airbyte/connectors', AirbyteConnectorController.getAirbyteConnectors),
     path('api/airbyte/connectors/create', AirbyteConnectorController.postAirbyteConnector),

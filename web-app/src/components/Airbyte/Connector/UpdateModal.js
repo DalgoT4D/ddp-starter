@@ -31,6 +31,7 @@ const UpdateModal = ({
 
   const [connectorDefs, setConnectorDefs] = useState([]);
   const [connectorDefSpecs, setConnectorDefSpecs] = useState([]);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleModalClose = () => {
@@ -116,6 +117,7 @@ const UpdateModal = ({
 
   const onFormSubmit = (values) => {
     (async () => {
+      setLoading(true);
       axios({
         method: "put",
         url: `${process.env.REACT_APP_API_URL}/api/airbyte/connectors/${uuid}/update`,
@@ -128,12 +130,14 @@ const UpdateModal = ({
         },
       })
         .then((res) => {
+          setLoading(false);
           setOpen(false);
           successToast(toastDispatch, res.data.message);
           setRefresh(!refresh);
           navigate("/airbyte");
         })
         .catch((err) => {
+          setLoading(false);
           errorToast(
             toastDispatch,
             err.response.data.message,
@@ -241,7 +245,7 @@ const UpdateModal = ({
                   },
                 }}
                 variant="contained"
-                loading={false}
+                loading={loading}
                 type="submit"
               >
                 Update connector

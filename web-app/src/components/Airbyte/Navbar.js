@@ -21,10 +21,10 @@ const Navbar = ({ tabVal, setTabVal }) => {
         onChange={handleTabValChange}
         aria-label="basic tabs example"
       >
+        <Tab label="Warehouse" value="destination" />
         <Tab label="Source" value="source" />
-        <Tab label="Destination" value="destination" />
-        <Tab label="Connections" value="connection" />
-        <Tab label="Orchestration" value="orchestration" />
+        {/* <Tab label="Transformation" value="transformation" />
+        <Tab label="Orchestration" value="orchestration" /> */}
       </Tabs>
     </Box>
   );

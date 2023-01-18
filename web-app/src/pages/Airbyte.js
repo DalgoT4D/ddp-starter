@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import Menu from "../common/Menu";
 import Navbar from "../components/Airbyte/Navbar";
 import Connector from "../components/Airbyte/Connector/Connector";
-import Connection from "../components/Airbyte/Connection/Connection";
+import Transformer from "../components/Dbt/Transformer";
 
 const Airbyte = () => {
   const [tabVal, setTabVal] = useState("source");
@@ -15,7 +15,7 @@ const Airbyte = () => {
       {(tabVal === "source" || tabVal === "destination") && (
         <Connector connector_type={tabVal} />
       )}
-      {tabVal === "connection" && <Connection />}
+      {tabVal === "transformation" && <Transformer />}
       {tabVal === "orchestration" && <div>orchestration</div>}
     </Box>
   );

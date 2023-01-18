@@ -30,6 +30,7 @@ const CreateModal = ({
 
   const [connectorDefs, setConnectorDefs] = useState([]);
   const [connectorDefSpecs, setConnectorDefSpecs] = useState([]);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleModalClose = () => {
@@ -53,9 +54,10 @@ const CreateModal = ({
 
   const onFormSubmit = (values) => {
     (async () => {
+      setLoading(true);
       axios({
         method: "post",
-        url: `${process.env.REACT_APP_API_URL}/api/airbyte/connectors/create`,
+        url: `${process.env.REACT_APP_API_URL}/api/airbyte/connections/sources`,
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         data: {
           name: values.connector,
@@ -65,12 +67,14 @@ const CreateModal = ({
         },
       })
         .then((res) => {
+          setLoading(false);
           setOpen(false);
           successToast(toastDispatch, res.data.message);
           setRefresh(!refresh);
           navigate("/airbyte");
         })
         .catch((err) => {
+          setLoading(false);
           errorToast(
             toastDispatch,
             err.response.data.message,
@@ -235,7 +239,7 @@ const CreateModal = ({
                   },
                 }}
                 variant="contained"
-                loading={false}
+                loading={loading}
                 type="submit"
               >
                 Creat a New {connector_type}

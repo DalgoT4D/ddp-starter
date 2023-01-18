@@ -30,15 +30,35 @@ def discoverSourceSchema(sourceId):
         raise CustomException(str(e), e.code if isinstance(e, CustomException) else 500)
 
 
-def createConnection(sourceId, destinationId, schema_catalog):
+def createConnection(sourceId, destinationId, schema_catalog, sourceCatalogId):
     try:
         payload = json.dumps({ 
             "sourceId": str(sourceId),
             "destinationId": str(destinationId),
             "status": "active",
-            "syncCatalog": schema_catalog
+            "syncCatalog": schema_catalog,
+            "sourceCatalogId": sourceCatalogId
         })
-        res = requests.post(airbyte_uri + '/connections/create', 
+        res = requests.post(airbyte_uri + '/web_backend/connections/create', 
+            auth=(username, password), 
+            data=payload,
+            headers={
+                'Content-Type': 'application/json'
+            }
+        )
+        data = res.json()
+        if res.status_code != 200:
+            raise CustomException(data['message'], 500)
+        return data
+    except Exception as e:
+        raise CustomException(str(e), e.code if isinstance(e, CustomException) else 500)
+
+def triggerDataSync(connectionId):
+    try:
+        payload = json.dumps({ 
+            "connectionId": connectionId
+        })
+        res = requests.post(airbyte_uri + '/connections/v1', 
             auth=(username, password), 
             data=payload,
             headers={

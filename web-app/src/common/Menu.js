@@ -61,10 +61,10 @@ const Menu = ({ navItem }) => {
               : { textDecoration: "none" }),
           }}
         >
-          Airbyte
+          Ingestion
         </Link>
         <Link
-          to="/dbt"
+          to="/transformation"
           style={{
             color: "inherit",
             textDecoration: "none",
@@ -73,7 +73,31 @@ const Menu = ({ navItem }) => {
               : { textDecoration: "none" }),
           }}
         >
-          Dbt
+          Transformation
+        </Link>
+        <Link
+          to="/orchestration"
+          style={{
+            color: "inherit",
+            textDecoration: "none",
+            ...(navItem === "prefect"
+              ? { textDecoration: "underline" }
+              : { textDecoration: "none" }),
+          }}
+        >
+          Orchestration
+        </Link>
+        <Link
+          to="/analysis"
+          style={{
+            color: "inherit",
+            textDecoration: "none",
+            ...(navItem === "analysis"
+              ? { textDecoration: "underline" }
+              : { textDecoration: "none" }),
+          }}
+        >
+          Analysis
         </Link>
         <Link
           style={{ color: "inherit", textDecoration: "none" }}
