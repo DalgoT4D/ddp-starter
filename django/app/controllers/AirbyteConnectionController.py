@@ -136,6 +136,6 @@ def postSyncDataForConnection(request, connection_uuid):
 
         data = triggerDataSync(connection_uuid)
 
-        return api('Source created and connection established to warehouse', {})
+        return api('Data synced successfully', {})
     except Exception as e:
         return api_error(str(e), {}, e.code if isinstance(e, CustomException) else 500)

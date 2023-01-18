@@ -12,8 +12,15 @@ import {
 } from "@mui/material";
 import moment from "moment";
 import { Delete, Edit } from "@mui/icons-material";
+import { LoadingButton } from "@mui/lab";
 
-const Row = ({ headings, row, onDeleteRow, onUpdateRow }) => {
+const Row = ({
+  headings,
+  row,
+  onDeleteRow,
+  onUpdateRow,
+  customActionButton,
+}) => {
   return (
     <TableRow>
       {headings.map((header, idx) =>
@@ -43,6 +50,28 @@ const Row = ({ headings, row, onDeleteRow, onUpdateRow }) => {
             >
               <Edit />
             </Button>
+            {customActionButton && row?.connection && row?.connection?.uuid && (
+              <LoadingButton
+                sx={{
+                  borderRadius: "5px",
+                  background: "black",
+                  minHeight: 0,
+                  minWidth: 0,
+                  ":hover": {
+                    background: "lightgrey",
+                    color: "black",
+                  },
+                }}
+                variant="contained"
+                loading={customActionButton.loading}
+                type="button"
+                onClick={() =>
+                  customActionButton.handler(row["connection"]["uuid"])
+                }
+              >
+                {customActionButton.label}
+              </LoadingButton>
+            )}
           </TableCell>
         ) : (
           <TableCell key={idx}>{row[header.field]}</TableCell>
@@ -65,7 +94,9 @@ const DataTable = ({
         <TableHead>
           <TableRow>
             {headings.map((header, idx) => (
-              <TableCell key={idx}>{header.name}</TableCell>
+              <TableCell key={idx} sx={{ textAlign: "center" }}>
+                {header.name}
+              </TableCell>
             ))}
           </TableRow>
         </TableHead>
@@ -77,6 +108,7 @@ const DataTable = ({
               row={row}
               onDeleteRow={onDeleteRow}
               onUpdateRow={onUpdateRow}
+              customActionButton={customActionButton}
             />
           ))}
         </TableBody>

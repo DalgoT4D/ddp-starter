@@ -109,9 +109,11 @@ const Connector = ({ connector_type }) => {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       })
         .then((res) => {
+          setSyncButtonLoading(false);
           successToast(toastDispatch, res.data.message);
         })
         .catch((err) => {
+          setSyncButtonLoading(false);
           errorToast(
             toastDispatch,
             err.response.data.message,

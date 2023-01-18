@@ -17,6 +17,7 @@ from ..validators import AirbyteConnectorRequest
 # Models
 from ..models.AirbyteConnector import AirbyteConnector
 from ..models.Organisation import Organisation
+from ..models.AirbyteConnection import AirbyteConnection
 
 # Airbyte api services
 from services.airbyte.SourceService import *
@@ -85,9 +86,15 @@ def getAirbyteConnectors(request):
         if (request.GET.get('type')):
             query['type'] = request.GET.get('type')
 
-        connectors = AirbyteConnector.objects.filter(**query).order_by('-created_at').values('uuid', 'name', 'definition_id', 'definition_name', 'creds', 'status', 'type')
+        connectors = AirbyteConnector.objects.filter(**query).order_by('-created_at').values('id', 'uuid', 'name', 'definition_id', 'definition_name', 'creds', 'status', 'type')
 
-        print(connectors)
+        for connector in connectors:
+            query = {}
+            if connector['type'] == 'source':
+                query['source_id'] = connector['id']
+            else:
+                query['destination_id'] = connector['id']
+            connector['connection'] = AirbyteConnection.objects.filter(**query).values('uuid').first()
 
         return api('Airbyte connectors fetched succesfully', connectors)
     except Exception as e:

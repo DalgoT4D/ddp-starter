@@ -58,7 +58,7 @@ def triggerDataSync(connectionId):
         payload = json.dumps({ 
             "connectionId": connectionId
         })
-        res = requests.post(airbyte_uri + '/connections/v1', 
+        res = requests.post(airbyte_uri + '/connections/sync', 
             auth=(username, password), 
             data=payload,
             headers={
